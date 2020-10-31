@@ -23,7 +23,7 @@ if(isMainThread){
     const privateKey = fs.readFileSync('./pkey.txt', 'utf8')
     const infuraUrl = 'https://goerli.infura.io/v3/71a59d0af9144e5aaf47e0a37c631f2c'
     // LOTTERY_MINUTES -> Countdown to pick a Winner
-    const LOTTERY_MINUTES = 5
+    const LOTTERY_MINUTES = 1
     
     // Initializes web3 and calls the pickWinner() method from the Lottery contract
     const resetLottery = async () =>{
@@ -35,33 +35,46 @@ if(isMainThread){
             Lottery.abi,
             Lottery.networks[networkId].address
         )
-        const tx = lottery.methods.pickWinner();
-        parentPort.postMessage('address: ' + address)
-        const gas = await web3.eth.estimateGas({from: address});
-        const gasPrice = await web3.eth.getGasPrice();
-        const data = tx.encodeABI();
-        const nonce = await web3.eth.getTransactionCount(address)
-        parentPort.postMessage('lottery.options.address: ' + lottery.options.address)
-        parentPort.postMessage('data: ' + data)
-        parentPort.postMessage('Gas: ' + gas)
-        parentPort.postMessage('Gas Price: ' + gasPrice)
-        parentPort.postMessage('Nonce: ' + nonce)
-        parentPort.postMessage('ChainId: ' + networkId)
-        parentPort.postMessage('PrivateKey:......')
-        parentPort.postMessage('Trying to send Transaction...')
-        const signedTx = await web3.eth.accounts.signTransaction(
-            {
-                to: lottery.options.address,
-                data,
-                gas,
-                gasPrice,
-                nonce,
-                chainId: networkId
-            },
-            privateKey
-        );
-        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction)
-        parentPort.postMessage('Transaction hash: ' + receipt.transactionHash)
+        const players = await lottery.methods.getPlayers().call()
+        console.warn('length: ' + players.length)
+        if(players.length > 0){
+            parentPort.postMessage(await lottery.methods.getPlayers().call())
+            const tx = lottery.methods.pickWinner();
+            parentPort.postMessage('address: ' + address)
+            const data = tx.encodeABI();
+            const gas = await web3.eth.estimateGas({
+                    from: address,
+                    data,
+                    to: lottery.options.address
+            });
+            const gasPrice = await web3.eth.getGasPrice();
+            const nonce = await web3.eth.getTransactionCount(address)
+            parentPort.postMessage('lottery.options.address: ' + lottery.options.address)
+            parentPort.postMessage('data: ' + data)
+            parentPort.postMessage('Gas: ' + gas)
+            parentPort.postMessage('Gas Price: ' + gasPrice)
+            parentPort.postMessage('Nonce: ' + nonce)
+            parentPort.postMessage('ChainId: ' + networkId)
+            parentPort.postMessage('PrivateKey:......')
+            parentPort.postMessage('Trying to send Transaction...') 
+            const signedTx = await web3.eth.accounts.signTransaction(
+                {
+                    to: lottery.options.address,
+                    data,
+                    gas,
+                    gasPrice,
+                    nonce,
+                    chainId: networkId
+                },
+                privateKey
+            );
+            const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+            parentPort.postMessage('Transaction hash: ' + receipt.transactionHash)
+            players = await lottery.methods.getPlayers().call()
+        } else{
+            parentPort.postMessage('No players on this round. Restarting Lottery...')
+        }
+        
     }
     
     // Starts the counter in minutes and calls the resetLottery() method
@@ -72,6 +85,7 @@ if(isMainThread){
             let currTime = startTime;
     
             parentPort.postMessage('******************* Picking a Winner and reseting the Lottery contract **********')
+            parentPort.postMessage(new Date())
             try{
                 await resetLottery();
             }catch(err){
