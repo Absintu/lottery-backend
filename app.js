@@ -1,3 +1,4 @@
+GNU nano 4.8                 lottery-backend/app.js                           
 const express = require('express')
 const {Worker, isMainThread, parentPort} = require('worker_threads')
 if(isMainThread){
@@ -18,6 +19,7 @@ if(isMainThread){
 } else{
     const fs = require('fs')
     const Web3 = require ('web3')
+    GNU nano 4.8                                                                              lottery-backend/app.js                                                                                         
     const address = '0xEA8aCa6C0712d0b23fdFeAAf4ae88479fBfa6756'
     const Lottery = require ('./Lottery.json')
     const privateKey = fs.readFileSync('./pkey.txt', 'utf8')
@@ -36,7 +38,7 @@ if(isMainThread){
             Lottery.networks[networkId].address
         )
         const players = await lottery.methods.getPlayers().call()
-        console.warn('length: ' + players.length)
+        parentPort.postMessage('length: ' + players.length)
         if(players.length > 0){
             parentPort.postMessage(await lottery.methods.getPlayers().call())
             const tx = lottery.methods.pickWinner();
@@ -70,20 +72,18 @@ if(isMainThread){
             );
             const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction)
             parentPort.postMessage('Transaction hash: ' + receipt.transactionHash)
-            players = await lottery.methods.getPlayers().call()
-        } else{
+          } else{
             parentPort.postMessage('No players on this round. Restarting Lottery...')
         }
-        
+
     }
-    
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}    
     // Starts the counter in minutes and calls the resetLottery() method
     (async ()=>{
         while(true){
-            let startTime = Date.now()
-            let endTime = startTime + 60000 * LOTTERY_MINUTES
-            let currTime = startTime;
-    
             parentPort.postMessage('******************* Picking a Winner and reseting the Lottery contract **********')
             parentPort.postMessage(new Date())
             try{
@@ -92,16 +92,10 @@ if(isMainThread){
                 parentPort.postMessage('No players or transaction error: ' + err)
             }
             parentPort.postMessage('************ Starting new Countdown *********')
-            parentPort.postMessage('Current time in ms:\t ' + currTime)
-            parentPort.postMessage('End time in ms:\t\t '+ endTime + '\n\n')
-            while(currTime != endTime){
-                currTime = Date.now()
-            }
+                await sleep(LOTTERY_MINUTES * 60 * 1000)
     
             // Start web3 and send transaction to the Lottery contract
     
         }
     })()
 }
-
-
