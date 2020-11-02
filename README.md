@@ -1,5 +1,5 @@
 # lottery-backend
 
- Controls timing and calls to the Lottery smart contract and frontend
+ Controls timing and calls to the Lottery smartcontracts and frontend
  
- Current state: resets Lottery every 1 minute
+ Current state: Trying to test 3 lotterys at time. Three workers deployed from main thread
