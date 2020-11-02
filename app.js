@@ -18,8 +18,7 @@ if(isMainThread){
     app.listen(PORT, () => console.log('Listening on port' + PORT))
 } else{
     const fs = require('fs')
-    const Web3 = require ('web3')
-    GNU nano 4.8                                                                              lottery-backend/app.js                                                                                         
+    const Web3 = require ('web3')                                                       lottery-backend/app.js                                                                                         
     const address = '0xEA8aCa6C0712d0b23fdFeAAf4ae88479fBfa6756'
     const Lottery = require ('./Lottery.json')
     const privateKey = fs.readFileSync('./pkey.txt', 'utf8')
